@@ -1,0 +1,37 @@
+html,body{height:100%;}
+.container-fluid {
+    height:100%;
+}
+.bd-example-modal-lg .modal-dialog{
+  display: table;
+  position: relative;
+  margin: 0 auto;
+  top: calc(50% - 24px);
+}
+
+.bd-example-modal-lg .modal-dialog .modal-content{
+  background-color: transparent;
+  border: none;
+}
+.col-form-label{
+    justify-content: flex-end;
+}
+
+.modal-dialog{
+    overflow-y: initial !important
+}
+.modal-body{
+    height: 75vh;
+    overflow-y: auto;
+}
+div.console
+{
+  font-family: "Courier New", monospace;
+  white-space: pre;
+  background-color: #F5F5F5;
+  overflow-y: auto;
+}
+.form_holder {
+  height:80vh;
+  overflow-y: scroll;
+}
