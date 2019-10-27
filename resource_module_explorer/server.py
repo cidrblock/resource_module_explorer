@@ -124,5 +124,5 @@ class Server(object):
         ).filter()
         return aiohttp.web.json_response(res)
 
-    def run(self):
-        aiohttp.web.run_app(self.app)
+    def run(self, host, port):
+        aiohttp.web.run_app(self.app, host=host, port=port)
