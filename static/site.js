@@ -14,49 +14,98 @@ function ConvertFormToJSON(form){
     return json;
 }
 function connect() {
+  log("Attempting websocket connection.")
   var ansi_up = new AnsiUp;
-  var console_pre = document.getElementById('console')
-  var console_div = document.getElementById('dconsole')
   var ws = (window.location.protocol=='https:'&&'wss://'||'ws://')+window.location.host+'/ws';
   conn = new WebSocket(ws);
   conn.onopen = function() {
-    console_pre.innerHTML += "Connected." + '<br>';
-    dconsole.scrollTop = dconsole.scrollHeight;
+    log("Connected via websocket.")
   };
   conn.onmessage = function(msg) {
     var html = ansi_up.ansi_to_html(JSON.parse(msg.data).event.stdout);
-    console_pre.innerHTML += html + '<br>';
-    dconsole.scrollTop = dconsole.scrollHeight;
+    log(html)
   };
 
   conn.onclose = function(e) {
     msg = 'Socket is closed. Reconnect will be attempted in 1 second.' + e.reason;
-    console_pre.innerHTML += msg + '<br>';
-    dconsole.scrollTop = dconsole.scrollHeight;
+    log(msg)
     setTimeout(function() {connect();}, 1000);
   };
 
   ws.onerror = function(err) {
     msg = 'Socket encountered error:', err.message, 'Closing socket';
-    console_pre.innerHTML += msg + '<br>';
-    dconsole.scrollTop = dconsole.scrollHeight;
+    log(msg)
     ws.close();
   };
+}
+function log(msg) {
+  var console_pre = document.getElementById('console')
+  var console_div = document.getElementById('dconsole')
+  console_pre.innerHTML += msg + '<br>';
+  dconsole.scrollTop = dconsole.scrollHeight
+}
+
+// limit the contents of the editor to the form resources
+function gatherResources(editor, resources) {
+  config = {}
+  if (resources.includes('all')) {
+    config = editor
+  } else {
+    for (key in editor) {
+      if (resources.includes(key)) {
+        config[key] = editor[key]
+      }
+    }
+  }
+  return config
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   // make the websocket connection
   connect();
 
+  // retrieve the os list
+  var request = new XMLHttpRequest();
+  request.open('GET', '/oss');
+  request.setRequestHeader('Content-Type', 'application/json');
+  request.onload = function() {
+      if (request.status === 200) {
+          data = JSON.parse(request.responseText);
+          var input = document.getElementById("os");
+          for(var i = 0; i < data.length; i++) {
+              var item = data[i];
+              var opt = document.createElement('option');
+              opt.text = item;
+              opt.value = item;
+              input.add(opt)
+          }
+          log("Retrieved OS list.")
+      }
+  };
+  request.send();
+
   // update the resource list when the OS changes
   document.getElementById("os").addEventListener('input', function (evt) {
-    if (this.value in disabled) {
-      for(var i = 0; i < disabled[this.value].length; i++) {
-          var item = disabled[this.value][i];
-          document.getElementById(item).setAttribute("disabled", true);
-          $('.resources').val('default').selectpicker('refresh');
-      }
-    }
+    var os = this.value;
+    var request = new XMLHttpRequest();
+    request.open('POST', '/resources');
+    request.setRequestHeader('Content-Type', 'application/json');
+    request.onload = function() {
+        if (request.status === 200) {
+            data = JSON.parse(request.responseText);
+            var input = document.getElementById("resources");
+            for(var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var opt = document.createElement('option');
+                opt.text = item;
+                opt.value = item;
+                input.add(opt)
+            }
+            $('.resources').val('default').selectpicker('refresh');
+            log("Retrieved resource list for " + os + '.')
+        }
+    };
+    request.send(JSON.stringify({"os": os}));
   });
 
   // enable the become password input when enable checked
@@ -75,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var request = new XMLHttpRequest();
       var json = ConvertFormToJSON(document.getElementById('form'));
       if (json.playbook_name == "ucrm") {
-        json.config = editor.get()
+        json.config = gatherResources(editor.get(), json.resources)
       }
       request.open('POST', '/render_playbook');
       request.setRequestHeader('Content-Type', 'application/json');
@@ -126,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var request = new XMLHttpRequest();
       var json = ConvertFormToJSON(document.getElementById('form'));
       if (json.playbook_name == "ucrm") {
-        json.config = editor.get()
+        json.config = gatherResources(editor.get(), json.resources)
       }
       request.open('POST', '/run_playbook');
       request.setRequestHeader('Content-Type', 'application/json');

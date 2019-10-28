@@ -8,10 +8,14 @@ class InventoryBuilder(object):
         self._username = username
 
     def generate(self):
+        if self._os == "junos":
+            conn = "netconf"
+        else:
+            conn = "network_cli"
         ivars = {
             "ansible_user": self._username,
             "ansible_password": self._password,
-            "ansible_connection": "network_cli",
+            "ansible_connection": conn,
             "ansible_network_os": self._os,
             "ansible_python_interpreter": "python",
         }

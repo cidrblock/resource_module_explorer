@@ -12,12 +12,6 @@ from .playbook_builder import PlaybookBuilder
 from .playbook_runner import PlaybookRunner
 from .event_filter import EventFilter
 
-
-
-PLATFORMS = ["eos", "ios", "iosxr", "junos", "nxos", "vyos"]
-RESOURCES = ["all", "interfaces", "l2_interfaces", "l3_interfaces", "vlans"]
-DISABLED_RESOURCES = {"vyos": ["vlans"]}
-
 yaml.add_representer(
     OrderedDict,
     lambda dumper, data: dumper.represent_mapping(
@@ -27,19 +21,37 @@ yaml.add_representer(
 
 
 class Server(object):
-    def __init__(self):
+    def __init__(self, settings):
+        self._settings = settings
         self.app = aiohttp.web.Application()
         self.app["websockets"] = []
-        self.app.router.add_get("/", self.index)
+        # self.app.router.add_get("/", self.index)
         self.app.router.add_post("/render_inventory", self.render_inventory)
         self.app.router.add_post("/render_playbook", self.render_playbook)
         self.app.router.add_post("/run_playbook", self.run_playbook)
+        self.app.router.add_post("/resources", self.resources)
         self.app.router.add_get("/ws", self.websocket_handler)
-        self.app.router.add_static('/static/', path='static', name='static')
+        self.app.router.add_get("/oss", self.oss)
+
+        self.app.router.add_route("*", "/", self.root_handler)
+        self.app.router.add_static("/", "./static")
         self.app.on_startup.append(self.start_background_tasks)
         self.eventq = queue.Queue()
         aiohttp_jinja2.setup(
             self.app, loader=jinja2.FileSystemLoader("./templates")
+        )
+
+    @staticmethod
+    async def root_handler(request):
+        return aiohttp.web.HTTPFound("/index.html")
+
+    async def oss(self, request):
+        return aiohttp.web.json_response(self._settings["platforms"])
+
+    async def resources(self, request):
+        content = await request.json()
+        return aiohttp.web.json_response(
+            self._settings["resources"][content["os"]]
         )
 
     async def queue_watcher(self, appi):
@@ -52,18 +64,6 @@ class Server(object):
 
     async def start_background_tasks(self, appi):
         appi.loop.create_task(self.queue_watcher(appi))
-
-    @staticmethod
-    async def index(request):
-        context = {
-            "disable_resources": DISABLED_RESOURCES,
-            "platforms": PLATFORMS,
-            "resources": RESOURCES,
-        }
-        response = aiohttp_jinja2.render_template(
-            "index.html", request, context
-        )
-        return response
 
     @staticmethod
     async def websocket_handler(request):
@@ -93,10 +93,12 @@ class Server(object):
     @staticmethod
     def generate_playbook(content):
         apb = PlaybookBuilder(
+            check_mode=content.get("check_mode", False),
             config=content.get("config"),
             host=content["host"],
             os=content["os"],
             resources=content["resources"],
+            state=content['state']
         )
         return apb.generate(content["playbook_name"])
 

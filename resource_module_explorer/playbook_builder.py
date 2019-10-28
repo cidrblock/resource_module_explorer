@@ -2,13 +2,14 @@ from collections import OrderedDict
 
 
 class PlaybookBuilder(object):
-    def __init__(self, host, os, resources, config=None):
+    def __init__(self, check_mode, host, os, resources, state, config=None):
+        self._check_mode = check_mode
         self._config = config
         self._host = host
         self._os = os
         self._resources = resources
+        self._state = state
         self._module = self._os + "_facts"
-
 
     def gfgf(self):
         playbook = [
@@ -41,11 +42,7 @@ class PlaybookBuilder(object):
         ]
         playbook = [
             OrderedDict(
-                {
-                    "hosts": self._host,
-                    "gather_facts": False,
-                    "tasks": tasks,
-                }
+                {"hosts": self._host, "gather_facts": False, "tasks": tasks}
             )
         ]
         return playbook
@@ -53,21 +50,18 @@ class PlaybookBuilder(object):
     def ucrm(self):
         tasks = []
         for key, val in self._config.items():
-            tasks.append(
-                OrderedDict(
-                    {
-                        "name": "Configure {}".format(key),
-                        "{}_{}".format(self._os, key): {"config": val},
-                    }
-                )
+            task = OrderedDict(
+                {
+                    "name": "Configure {}".format(key),
+                    "{}_{}".format(self._os, key): {"config": val, "state": self._state},
+                }
             )
+            if self._check_mode:
+                task["check_mode"] = True
+            tasks.append(task)
         playbook = [
             OrderedDict(
-                {
-                    "hosts": self._host,
-                    "gather_facts": False,
-                    "tasks": tasks,
-                }
+                {"hosts": self._host, "gather_facts": False, "tasks": tasks}
             )
         ]
         return playbook
