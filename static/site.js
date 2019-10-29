@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (request.status === 200) {
             data = JSON.parse(request.responseText);
             var input = document.getElementById("resources");
+            input.options.length = 0;
             for(var i = 0; i < data.length; i++) {
                 var item = data[i];
                 var opt = document.createElement('option');
