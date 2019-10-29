@@ -22,9 +22,14 @@ class InventoryBuilder(object):
         if self._become:
             ivars.update(
                 {
-                    "ansible_become_pass": self._become_password,
                     "ansible_become": self._become,
                     "ansible_become_method": "enable",
+                }
+            )
+        if self._become_password:
+            ivars.update(
+                {
+                    "ansible_become_pass": self._become_password,
                 }
             )
         inventory = {"all": {"hosts": self._host, "vars": ivars}}
