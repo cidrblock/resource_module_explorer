@@ -17,6 +17,5 @@ RUN set -e; \
 
 COPY app.py .
 COPY resource_module_explorer resource_module_explorer
-COPY templates templates
 COPY static static
 CMD [ "python", "./app.py" ]
