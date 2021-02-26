@@ -1,4 +1,4 @@
-aiohttp==3.6.2
+aiohttp==3.7.4
 aiohttp-jinja2==1.2.0
 ansible==2.9.0rc5
 ansible-runner==1.4.4
