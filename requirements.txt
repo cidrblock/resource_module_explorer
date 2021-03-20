@@ -10,7 +10,7 @@ chardet==3.0.4
 cryptography==2.8
 docutils==0.15.2
 idna==2.8
-Jinja2==2.10.3
+Jinja2==2.11.3
 lockfile==0.12.2
 lxml==4.4.1
 MarkupSafe==1.1.1
