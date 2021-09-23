@@ -1,6 +1,6 @@
 aiohttp==3.6.2
 aiohttp-jinja2==1.2.0
-ansible==2.9.0rc5
+ansible==4.2.0
 ansible-runner==1.4.4
 async-timeout==3.0.1
 attrs==19.3.0
