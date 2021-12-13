@@ -12,7 +12,7 @@ docutils==0.15.2
 idna==2.8
 Jinja2==2.10.3
 lockfile==0.12.2
-lxml==4.4.1
+lxml==4.6.5
 MarkupSafe==1.1.1
 multidict==4.5.2
 ncclient==0.6.6
